@@ -1,9 +1,6 @@
-
-
 import React, { createContext, useState, useMemo, useContext } from 'react';
 import * as XLSX from 'https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs';
-// FIX: Use package import for GoogleGenAI as per guidelines
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { useStickyState } from '../hooks/useStickyState';
 import { initialStudents } from '../data/students';
 import { initialGrades } from '../data/grades';
@@ -17,14 +14,11 @@ import type { Student, Grade, FollowUp, FollowUps, Curriculum, Sort, Filters, Pa
 
 const SIMILARITY_THRESHOLD = 0.8;
 
-// Safely initialize the AI client. This prevents crashes in environments
-// where process.env is not defined, like a standard Vite dev server.
 const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 const AppContext = createContext<AppContextType | null>(null);
 
-// FIX: Add useAppContext hook for consuming the context
 export const useAppContext = () => {
     const context = useContext(AppContext);
     if (context === null) {
@@ -39,6 +33,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // --- CORE STATE ---
     // ===================================================================================
     const [students, setStudents] = useStickyState<Student[]>(initialStudents, 'studentDashboardData');
+    const [pendingStudents, setPendingStudents] = useStickyState<Student[]>([], 'pendingStudentsData');
     const [archivedStudents, setArchivedStudents] = useStickyState<Student[]>([], 'archivedStudentData');
     const [grades, setGrades] = useStickyState<Grade[]>(initialGrades, 'studentGradesData');
     const [curriculum, setCurriculum] = useStickyState<Curriculum>(initialCurriculum, 'studentCurriculumData');
@@ -58,6 +53,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const [modal, setModal] = useState<string | null>(null);
     const [reviewData, setReviewData] = useState<Student | null>(null);
     const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+    const [studentToReject, setStudentToReject] = useState<Student | null>(null);
     const [postSelectionAction, setPostSelectionAction] = useState<string | null>(null);
     const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
     const [guardianToEdit, setGuardianToEdit] = useState<GuardianToEdit | null>(null);
@@ -152,7 +148,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                         student.School.name
                     ].join(' ').toLowerCase();
                     
-                    // The 'every' method ensures all search terms are found in the string
                     if (!searchTerms.every(term => searchableString.includes(term))) {
                         return false;
                     }
@@ -254,7 +249,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const riskData: AtRiskStudent[] = [];
         const studentAverages: { [key: string]: number } = {};
 
-        // Calculate average score for each student
         const gradesByStudent: { [key: string]: Grade[] } = {};
         grades.forEach(grade => {
             if (!gradesByStudent[grade.StudentID]) {
@@ -274,13 +268,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         studentsWithAge.forEach(student => {
             const reasons = new Set<string>();
             
-            // Check academic performance
             const avg = studentAverages[student.StudentID];
             if (avg !== undefined && avg < 60) {
                 reasons.add(`Low Score (${avg.toFixed(1)})`);
             }
 
-            // Check latest follow-up
             const studentFollowUps = followUps[student.StudentID];
             if (studentFollowUps && studentFollowUps.length > 0) {
                 const latestFollowUp = studentFollowUps.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
@@ -299,7 +291,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }
         });
         
-        // Sort by number of reasons, then by name
         return riskData.sort((a, b) => {
             if (b.reasons.length !== a.reasons.length) {
                 return b.reasons.length - a.reasons.length;
@@ -313,7 +304,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // --- HANDLER FUNCTIONS ---
     // ===================================================================================
     
-    // A centralized function to update student records across the main data lists.
     const _updateStudentLists = (...updatedStudents: Student[]) => {
         const updatesMap = new Map(updatedStudents.map(s => [s.StudentID, s]));
 
@@ -346,21 +336,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     const handleSelectStudent = (student: Student) => {
-        // If we are currently on a profile page and have a student selected, push it to history
         if ((activeTab === 'profile' || activeTab === 'archived-profile') && selectedStudent) {
-            // Avoid pushing the same student twice if re-clicking
             if (selectedStudent.StudentID !== student.StudentID) {
                  setStudentHistory(prev => [...prev, selectedStudent]);
             }
         } else {
-            // This is the first navigation from a list page, so clear history
             setStudentHistory([]);
-            setPreviousTab(activeTab); // Store the list page we came from
+            setPreviousTab(activeTab);
         }
         
         setSelectedStudent(student);
         
-        // Determine the correct profile tab to switch to
         const isTargetArchived = archivedStudents.some(s => s.StudentID === student.StudentID);
         setActiveTab(isTargetArchived ? 'archived-profile' : 'profile');
     };
@@ -373,11 +359,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setStudentHistory(newHistory);
             setSelectedStudent(previousStudent);
             
-            // We need to know if the previous student was archived to set the correct tab
             const isArchived = archivedStudents.some(s => s.StudentID === previousStudent.StudentID);
             setActiveTab(isArchived ? 'archived-profile' : 'profile');
         } else {
-            // No history, go back to the list view we came from
             setActiveTab(previousTab || 'student-list');
         }
     };
@@ -387,19 +371,92 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setModal('review');
     };
 
+    const handleCheckEligibility = async (student: Student) => {
+        if (!ai) {
+            setPendingStudents(prev => prev.map(p => p.StudentID === student.StudentID
+                ? { ...p, eligibility: { status: 'Error', reason: 'AI client is not configured.' } }
+                : p
+            ));
+            return;
+        }
+
+        try {
+            const studentProfile = {
+                guardianIncome: student.guardians?.[0]?.income,
+                guardianJob: student.guardians?.[0]?.job,
+                numberOfGuardians: student.guardians?.length,
+                totalMonthlyCosts: (student.financials || []).reduce((total, item) => total + calculateMonthlyEquivalent(String(item.amount), item.frequency), 0),
+                comments: student.Comments,
+            };
+
+            const systemInstruction = "You are an admissions officer for a non-profit organization that provides educational scholarships. Your task is to evaluate a student's application based on their financial and family situation to determine if they are eligible for aid. Focus on signs of financial hardship like low guardian income, unstable jobs, or high educational costs relative to income. Provide your assessment in JSON format.";
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: `Please evaluate the following student profile for scholarship eligibility: ${JSON.stringify(studentProfile)}`,
+                config: {
+                    systemInstruction,
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            status: { type: Type.STRING, description: "Either 'Eligible' or 'Ineligible'." },
+                            reason: { type: Type.STRING, description: "A brief, one-sentence explanation for the decision." }
+                        },
+                        propertyOrdering: ["status", "reason"],
+                    }
+                }
+            });
+            
+            const jsonStr = response.text.trim();
+            const result = JSON.parse(jsonStr);
+
+            setPendingStudents(prev => prev.map(p =>
+                p.StudentID === student.StudentID
+                    ? { ...p, eligibility: { status: result.status, reason: result.reason } }
+                    : p
+            ));
+        } catch (error) {
+            console.error("AI Eligibility Check Error:", error);
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            setPendingStudents(prev => prev.map(p => p.StudentID === student.StudentID
+                ? { ...p, eligibility: { status: 'Error', reason: `AI check failed: ${errorMessage}` } }
+                : p
+            ));
+        }
+    };
+
     const handleSaveStudent = () => {
         if (!reviewData) return;
         const dataToSave = { ...reviewData, academicStatus: reviewData.academicStatus || 'Active' };
-        const existingStudentIndex = students.findIndex(s => s.StudentID === dataToSave.StudentID);
-        if (existingStudentIndex > -1) {
-            setStudents(prev => prev.map((s, i) => i === existingStudentIndex ? dataToSave : s));
+        const isExisting = students.some(s => s.StudentID === dataToSave.StudentID);
+    
+        if (isExisting) {
+            setStudents(prev => prev.map(s => s.StudentID === dataToSave.StudentID ? dataToSave : s));
+            handleSelectStudent(dataToSave);
         } else {
-            setStudents(prev => [...prev, dataToSave]);
+            const newStudentWithStatus = { ...dataToSave, eligibility: { status: 'Checking...', reason: 'AI is evaluating this student...' } };
+            setPendingStudents(prev => [...prev, newStudentWithStatus]);
+            handleCheckEligibility(newStudentWithStatus);
+            setActiveTab('pending-list');
         }
+    
         setModal(null);
         setReviewData(null);
-        handleSelectStudent(dataToSave);
-        alert('Student data saved successfully!');
+    };
+
+    const handleApproveStudent = (studentId: string) => {
+        const studentToApprove = pendingStudents.find(s => s.StudentID === studentId);
+        if (!studentToApprove) return;
+        setStudents(prev => [...prev, studentToApprove]);
+        setPendingStudents(prev => prev.filter(s => s.StudentID !== studentId));
+    };
+
+    const handleRejectStudent = () => {
+        if (!studentToReject) return;
+        setPendingStudents(prev => prev.filter(s => s.StudentID !== studentToReject.StudentID));
+        setModal(null);
+        setStudentToReject(null);
     };
     
     const handleImportStudents = (data: ArrayBuffer) => {
@@ -408,10 +465,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             
-            // Get headers from the first row
             const headers: string[] = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] as string[];
 
-            setFileHeaders(headers.filter(h => h)); // Filter out any empty headers
+            setFileHeaders(headers.filter(h => h));
             setImportFileData(data);
             setModal('column-mapping');
         } catch (error) {
@@ -512,10 +568,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const handleConfirmImport = (resolutions: DuplicateResolution, resolvedUpdates: ResolvedUpdates, selectedNewStudentIds: Set<string>) => {
         let newStudentsToAdd: Student[] = [];
 
-        // Process new students that were selected for import
         newStudentsToAdd = pendingNewStudents.filter(s => selectedNewStudentIds.has(s.StudentID));
 
-        // Process potential duplicates
         pendingPotentialDuplicates.forEach(dup => {
             const resolution = resolutions[dup.newStudent.StudentID];
             if (resolution === 'create') {
@@ -533,7 +587,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }
         });
 
-        // Process updates to existing students
         const finalUpdates: { [studentId: string]: Partial<Student> } = {};
         pendingUpdatedStudents.forEach(info => {
             const chosenUpdates = resolvedUpdates[info.studentId];
@@ -607,6 +660,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const handleResetData = () => {
         if (window.confirm("Are you sure you want to reset all data? This will restore the application to its original state and cannot be undone.")) {
             setStudents(initialStudents);
+            setPendingStudents([]);
             setArchivedStudents([]);
             setGrades(initialGrades);
             setCurriculum(initialCurriculum);
@@ -707,7 +761,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setPostSelectionAction(null);
     };
 
-    // FIX: Updated Gemini API call
     const handleAiQuery = async (query: string) => {
         if (!ai) {
             setAiChatHistory(prev => [...prev, { role: 'user', text: query }, { role: 'model', text: "AI client is not configured. Please check API key." }]);
@@ -727,14 +780,14 @@ Student data is in this format: ${JSON.stringify({
     Sex: "M | F",
     DOB: "YYYY-MM-DD",
     Age: "number | 'N/A'",
-    Grade: "string", // e.g., "12", "University"
+    Grade: "string",
     School: { name: "string", campus: "string" },
-    financials: [{ category: "string", item: "string", amount: "string", frequency: "'One-time' | 'Monthly' | ..." }],
+    financials: [{ category: "string", item: "string", amount: "string", frequency: "string" }],
     guardians: [{ name: "string", relationship: "string" }],
     Major: "string",
     EnrollmentDate: "YYYY-MM-DD",
     Location: "string",
-    academicStatus: "'Active' | 'On Hold' | 'Pursuing Skills' | 'Working'",
+    academicStatus: "string",
 } , null, 2)}
             
 Here is the complete student dataset:
@@ -875,9 +928,8 @@ ${JSON.stringify(studentsWithAge, null, 2)}
         window.location.reload();
     };
 
-    // FIX: Add a value object for the provider and return the provider component
     const contextValue: AppContextType = {
-        students, archivedStudents, grades, curriculum, followUps, parentProfiles, events, eventToEdit, columnConfig, archiveColumnConfig, activeTab, previousTab, selectedStudent, modal, reviewData, studentToDelete, postSelectionAction, followUpToEdit, pendingNewStudents, pendingUpdatedStudents, pendingPotentialDuplicates, pendingSiblingConfirmation, importErrors, fileHeaders, importFileData, guardianToEdit, filters, category, sort, archiveSort, studentsWithAge, schoolAverages, filteredAndSortedStudents, sortedArchivedStudents, studentGrades, atRiskStudents, totals, aiChatHistory, isAiLoading, studentHistory, setStudents, setArchivedStudents, setGrades, setCurriculum, setFollowUps, setParentProfiles, setEvents, setEventToEdit, setColumnConfig, setArchiveColumnConfig, setActiveTab, setPreviousTab, setSelectedStudent, setModal, setReviewData, setStudentToDelete, setPostSelectionAction, setFollowUpToEdit, setPendingNewStudents, setPendingUpdatedStudents, setPendingPotentialDuplicates, setPendingSiblingConfirmation, setImportErrors, setFileHeaders, setImportFileData, setGuardianToEdit, setFilters, setCategory, setSort, setArchiveSort, setStudentHistory, handleSort, handleArchiveSort, handleSelectSchool, handleSelectStudent, handleReviewStudent, handleSaveStudent, handleImportStudents, handleProcessMappedImport, handleConfirmImport, handleUpdateStudentPhoto, handleUpdateParentPhoto, handleArchiveStudent, handleUpdateArchivedStudent, handleRestoreStudent, handlePermanentDelete, handleResetData, openModal, handleAddGrades, handleAddFollowUp, handleUpdateFollowUp, handleDeleteFollowUp, handleOpenEditFollowUpModal, handleAddEvent, handleUpdateEvent, handleDeleteEvent, handleAddMenuSelect, handleStudentSelectionForAction, handleAiQuery, handleBack, handleConfirmSibling, handleResolveSiblingGuardians, handleManageAttachments, handleUpdateGuardianInfo, handleRefreshData
+        students, archivedStudents, pendingStudents, grades, curriculum, followUps, parentProfiles, events, eventToEdit, columnConfig, archiveColumnConfig, activeTab, previousTab, selectedStudent, modal, reviewData, studentToDelete, studentToReject, postSelectionAction, followUpToEdit, pendingNewStudents, pendingUpdatedStudents, pendingPotentialDuplicates, pendingSiblingConfirmation, importErrors, fileHeaders, importFileData, guardianToEdit, filters, category, sort, archiveSort, studentsWithAge, schoolAverages, filteredAndSortedStudents, sortedArchivedStudents, studentGrades, atRiskStudents, totals, aiChatHistory, isAiLoading, studentHistory, setStudents, setArchivedStudents, setPendingStudents, setGrades, setCurriculum, setFollowUps, setParentProfiles, setEvents, setEventToEdit, setColumnConfig, setArchiveColumnConfig, setActiveTab, setPreviousTab, setSelectedStudent, setModal, setReviewData, setStudentToDelete, setStudentToReject, setPostSelectionAction, setFollowUpToEdit, setPendingNewStudents, setPendingUpdatedStudents, setPendingPotentialDuplicates, setPendingSiblingConfirmation, setImportErrors, setFileHeaders, setImportFileData, setGuardianToEdit, setFilters, setCategory, setSort, setArchiveSort, setStudentHistory, handleSort, handleArchiveSort, handleSelectSchool, handleSelectStudent, handleReviewStudent, handleSaveStudent, handleApproveStudent, handleRejectStudent, handleImportStudents, handleProcessMappedImport, handleConfirmImport, handleUpdateStudentPhoto, handleUpdateParentPhoto, handleArchiveStudent, handleUpdateArchivedStudent, handleRestoreStudent, handlePermanentDelete, handleResetData, openModal, handleAddGrades, handleAddFollowUp, handleUpdateFollowUp, handleDeleteFollowUp, handleOpenEditFollowUpModal, handleAddEvent, handleUpdateEvent, handleDeleteEvent, handleAddMenuSelect, handleStudentSelectionForAction, handleAiQuery, handleBack, handleConfirmSibling, handleResolveSiblingGuardians, handleManageAttachments, handleUpdateGuardianInfo, handleRefreshData
     };
 
     return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 
@@ -17,20 +16,20 @@ import ArchivePage from '../pages/ArchivePage';
 import ManualInstructionsPage from '../pages/ManualInstructionsPage';
 import ParentsListPage from '../pages/ParentsListPage';
 import EventsPage from '../pages/EventsPage';
+import PendingListPage from '../pages/PendingListPage';
 
 const AppContent: React.FC = () => {
     const { activeTab } = useAppContext();
-    // Pinned state is controlled by clicks, hover state by mouse position
     const [isSidebarPinned, setIsSidebarPinned] = useState(window.innerWidth >= 1024);
     const [isSidebarHovered, setIsSidebarHovered] = useState(false);
     const menuBtnRef = useRef<HTMLButtonElement>(null);
 
-    // The sidebar is visible if it's either pinned open or the user is hovering over it
     const isSidebarVisible = isSidebarPinned || isSidebarHovered;
 
     const renderActiveTab = () => {
         switch (activeTab) {
             case 'dashboard': return <HomePage />;
+            case 'pending-list': return <PendingListPage />;
             case 'student-list': return <StudentListPage />;
             case 'events': return <EventsPage />;
             case 'profile': return <StudentProfilePage />;
@@ -47,7 +46,6 @@ const AppContent: React.FC = () => {
 
     return (
         <div className="app-container bg-gray-100 text-gray-800 h-screen overflow-hidden flex font-sans">
-            {/* This invisible div on the left edge triggers the sidebar to show on hover */}
             {!isSidebarPinned && (
                  <div
                     className="fixed top-0 left-0 h-full w-4 z-30"
@@ -60,8 +58,6 @@ const AppContent: React.FC = () => {
                 setOpen={setIsSidebarPinned}
                 menuRef={menuBtnRef}
                 onMouseLeave={() => {
-                    // This will be called when the mouse leaves the sidebar area.
-                    // We only want to close it if it was opened by hover.
                     if (!isSidebarPinned) {
                         setIsSidebarHovered(false);
                     }

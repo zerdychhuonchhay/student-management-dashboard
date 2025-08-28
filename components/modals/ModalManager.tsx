@@ -27,7 +27,8 @@ const ModalManager: React.FC = () => {
         postSelectionAction, pendingNewStudents, pendingUpdatedStudents, pendingPotentialDuplicates, handleConfirmImport,
         handleReviewStudent, handleUpdateArchivedStudent, pendingSiblingConfirmation,
         eventToEdit, handleAddEvent, handleUpdateEvent, guardianToEdit,
-        followUpToEdit, setFollowUpToEdit
+        followUpToEdit, setFollowUpToEdit,
+        studentToReject, handleRejectStudent, setStudentToReject
     } = useAppContext();
 
     if (!modal) return null;
@@ -49,6 +50,8 @@ const ModalManager: React.FC = () => {
             return selectedStudent && <EditArchivedInfoModal student={selectedStudent} onSave={handleUpdateArchivedStudent} onClose={() => setModal(null)} />;
         case 'delete':
             return studentToDelete && <ConfirmationModal title="Confirm Permanent Deletion" message={`Are you sure you want to permanently delete ${studentToDelete['Given Name']}? This action cannot be undone.`} onConfirm={handlePermanentDelete} onClose={() => setModal(null)} />;
+        case 'reject-pending':
+            return studentToReject && <ConfirmationModal title="Confirm Rejection" message={`Are you sure you want to reject the application for ${studentToReject['Given Name']}? This cannot be undone.`} onConfirm={handleRejectStudent} onClose={() => { setModal(null); setStudentToReject(null); }} />;
         case 'add-grades':
             return selectedStudent && <AddGradesModal student={selectedStudent} curriculum={curriculum} onAddGrades={handleAddGrades} onClose={() => setModal(null)} />;
         case 'add-follow-up':

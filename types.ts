@@ -57,6 +57,10 @@ export interface Student {
     Age?: number | 'N/A';
     DateLeft?: string;
     ReasonLeft?: string;
+    eligibility?: {
+        status: string; // e.g., 'Pending', 'Eligible', 'Ineligible', 'Error'
+        reason: string;
+    };
 }
 
 export interface Grade {
@@ -201,6 +205,7 @@ export interface FollowUpToEdit {
 export interface AppContextType {
     students: Student[];
     archivedStudents: Student[];
+    pendingStudents: Student[];
     grades: Grade[];
     curriculum: Curriculum;
     followUps: FollowUps;
@@ -215,6 +220,7 @@ export interface AppContextType {
     modal: string | null;
     reviewData: Student | null;
     studentToDelete: Student | null;
+    studentToReject: Student | null;
     postSelectionAction: string | null;
     followUpToEdit: FollowUpToEdit | null;
     pendingNewStudents: Student[];
@@ -241,6 +247,7 @@ export interface AppContextType {
     studentHistory: Student[];
     setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
     setArchivedStudents: React.Dispatch<React.SetStateAction<Student[]>>;
+    setPendingStudents: React.Dispatch<React.SetStateAction<Student[]>>;
     setGrades: React.Dispatch<React.SetStateAction<Grade[]>>;
     setCurriculum: React.Dispatch<React.SetStateAction<Curriculum>>;
     setFollowUps: React.Dispatch<React.SetStateAction<FollowUps>>;
@@ -255,6 +262,7 @@ export interface AppContextType {
     setModal: React.Dispatch<React.SetStateAction<string | null>>;
     setReviewData: React.Dispatch<React.SetStateAction<Student | null>>;
     setStudentToDelete: React.Dispatch<React.SetStateAction<Student | null>>;
+    setStudentToReject: React.Dispatch<React.SetStateAction<Student | null>>;
     setPostSelectionAction: React.Dispatch<React.SetStateAction<string | null>>;
     setFollowUpToEdit: React.Dispatch<React.SetStateAction<FollowUpToEdit | null>>;
     setPendingNewStudents: React.Dispatch<React.SetStateAction<Student[]>>;
@@ -276,6 +284,8 @@ export interface AppContextType {
     handleSelectStudent: (student: Student) => void;
     handleReviewStudent: (formData: Student) => void;
     handleSaveStudent: () => void;
+    handleApproveStudent: (studentId: string) => void;
+    handleRejectStudent: () => void;
     handleImportStudents: (data: ArrayBuffer) => void;
     handleProcessMappedImport: (mapping: ColumnMapping) => void;
     handleConfirmImport: (resolutions: DuplicateResolution, resolvedUpdates: ResolvedUpdates, selectedNewStudentIds: Set<string>) => void;
