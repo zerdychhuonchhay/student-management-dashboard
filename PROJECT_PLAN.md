@@ -1,136 +1,97 @@
-# Project Plan: Full-Stack Student Management System
+# Project Plan: Full-Stack Student Management System (Django Backend)
 
-This document outlines the technical roadmap for evolving the application from a frontend-only prototype into a secure, multi-user, full-stack application with advanced AI capabilities.
+This document outlines the technical roadmap for evolving the application from a frontend-only prototype into a secure, multi-user, full-stack application with an advanced Python/Django backend.
 
 ---
 
-### **Milestone 1: Build the Backend Foundation (The Secure Vault) - COMPLETE**
+### **Milestone 1: Build the Django Backend Foundation - COMPLETE**
 
-**Goal:** Create a private, authoritative server to manage all data, logic, and secrets. All data will be migrated from frontend files to a secure database.
+**Goal:** Create a private, authoritative server using Python and Django to manage all data, logic, and secrets. All data will be migrated from frontend files to a secure database.
 
 #### **Technical Implementation:**
 
-*   **Project Setup:** A Node.js project has been created in the `backend` directory with all necessary dependencies.
-*   **Database:** A Prisma schema (`prisma/schema.prisma`) now defines the entire database structure for PostgreSQL.
-*   **Authentication API:** Secure endpoints for user registration (with `bcrypt` password hashing) and login (with JWT generation) are complete.
-*   **Core Data API:** RESTful endpoints for managing students (`GET`, `POST`, `PUT`, `DELETE`) have been created.
-*   **Validation:** Basic data validation has been implemented on the API routes.
+*   **Project Setup:** A new Django project has been created in the `django_backend` directory with all necessary apps and dependencies defined in `requirements.txt`.
+*   **Database:** Django's built-in ORM is used to define the entire database schema in `api/models.py`. The default database is SQLite for easy setup, but it is configured to be easily switched to PostgreSQL for production.
+*   **Authentication API:** Secure endpoints for user registration and token-based login (using Django REST Framework's TokenAuthentication) are complete.
+*   **Core Data API:** RESTful endpoints for managing students (`GET`, `POST`, `PUT`, `DELETE`) have been created using Django REST Framework's `ModelViewSet`.
+*   **Validation:** Data validation is handled automatically by the API serializers (`api/serializers.py`).
 
-#### **How to Run Your New Backend:**
+#### **How to Run Your New Django Backend:**
 
-1.  **Navigate to the Backend:** Open a new terminal and change directory into the new `backend` folder:
+1.  **Prerequisites:** You must have **Python** (version 3.8 or newer) and `pip` installed on your system.
+
+2.  **Navigate to the Backend:** Open a new terminal and change directory into the new `django_backend` folder:
     ```bash
-    cd backend
+    cd django_backend
     ```
-2.  **Install Dependencies:** Run `npm install` to download all the required libraries.
+3.  **Create a Virtual Environment:** This is a best practice for Python projects to keep dependencies isolated.
     ```bash
-    npm install
+    python -m venv venv
     ```
-3.  **Set Up Environment Variables:**
-    *   Create a new file in the `backend` folder named `.env`.
-    *   Copy the contents of `.env.example` into your new `.env` file.
-    *   **Crucially, you must replace the `DATABASE_URL` with your actual PostgreSQL connection string.** You can get a free database from services like Supabase or Render.
-    *   The `JWT_SECRET` is a random string you should create for security.
-4.  **Set Up the Database:** Run the Prisma migrate command. This will read your `schema.prisma` file and create all the necessary tables in your database.
+4.  **Activate the Virtual Environment:**
+    *   On macOS/Linux: `source venv/bin/activate`
+    *   On Windows: `venv\Scripts\activate`
+    Your terminal prompt should now show `(venv)` at the beginning.
+
+5.  **Install Dependencies:** Use `pip` to install all the libraries listed in `requirements.txt`.
     ```bash
-    npx prisma migrate dev --name init
+    pip install -r requirements.txt
     ```
-5.  **Seed the Database:** (Optional but recommended) Run the seed script to create the initial 'Admin' and 'Teacher' users so you can log in.
+6.  **Set Up Environment Variables:**
+    *   Create a new file in the `django_backend` folder named `.env`.
+    *   Copy the contents of `django_backend/.env.example` into your new `.env` file.
+    *   The `SECRET_KEY` is critical for security. You can generate a new one or use the example for development. For production, always generate a new one.
+
+7.  **Set Up the Database:** Run the Django migrate command. This will read your `api/models.py` file and create a `db.sqlite3` file with all the necessary tables.
     ```bash
-    npx prisma db seed
+    python manage.py migrate
     ```
-6.  **Start the Server:** Run the development server.
+8.  **Create a Superuser:** This will be your first 'Admin' account, allowing you to access Django's built-in admin interface.
     ```bash
-    npm run dev
+    python manage.py createsuperuser
     ```
-    Your backend API will now be running, typically on `http://localhost:3001`.
+    You will be prompted to create a username, email, and password.
+
+9.  **Start the Server:** Run the development server.
+    ```bash
+    python manage.py runserver
+    ```
+    Your Django backend API will now be running, typically on `http://127.0.0.1:8000/`. You can visit this URL in your browser to confirm it's working. You can also log into the admin panel at `http://127.0.0.1:8000/admin/`.
 
 ---
 
 ### **Milestone 2: Secure Frontend Integration**
 
-**Goal:** Refactor the React application to communicate exclusively and securely with the new backend API.
+**Goal:** Refactor the React application to communicate exclusively and securely with the new Django backend API.
 
 #### **Technical Implementation:**
 
-1.  **API Client Setup:**
-    *   Use `axios` for all HTTP requests from the frontend.
-    *   Create a centralized `axios` instance with a base URL configured via environment variables (`VITE_API_BASE_URL`).
-
-2.  **Data Fetching Refactor:**
-    *   In `AppContext.tsx`, remove all local data imports (`initialStudents`, etc.).
-    *   Use a `useEffect` hook to fetch initial data (`/api/students`, `/api/users`, etc.) from the backend when the application loads. Manage loading and error states.
-
+1.  **API Client Setup:** Use `axios` to make API calls from the React frontend to the Django backend (e.g., to `http://127.0.0.1:8000/api/`).
+2.  **Data Fetching Refactor:** In `AppContext.tsx`, remove local data imports and use `useEffect` to fetch initial data from the Django API.
 3.  **Authentication Flow:**
-    *   The `LoginPage` will call `POST /api/auth/login`.
-    *   On a successful response, the JWT received from the backend will be stored in a secure, **`httpOnly` cookie**. This is a critical security measure against XSS attacks. The backend will be responsible for setting this cookie.
-    *   Configure the `axios` instance to automatically include credentials (the cookie) with every subsequent request (`withCredentials: true`).
-
-4.  **Secure the Gemini API Key:**
-    *   **CRITICAL:** Remove all direct calls to the Gemini API from the frontend. The API key must be removed from the frontend's environment.
-    *   Create a new, authenticated backend endpoint: `POST /api/ai/check-eligibility`.
-    *   This endpoint receives student data from the frontend, verifies the user is authenticated via their JWT cookie, and *then* makes the call to the Gemini API using the key stored securely in the backend's environment variables.
+    *   `LoginPage` calls `POST /api/login/` with a username and password.
+    *   On success, the backend returns an authentication token.
+    *   The frontend stores this token and includes it in the `Authorization` header for all subsequent requests (e.g., `Authorization: Token <your_token>`).
+4.  **Secure the Gemini API Key:** Create a new, authenticated endpoint on the Django backend (e.g., `POST /api/ai/check-eligibility/`). The frontend calls this endpoint, and the backend securely calls the Gemini API, keeping the key private.
 
 ---
 
 ### **Milestone 3: Role-Based Access Control (RBAC)**
 
-**Goal:** Enforce different permissions for 'Admin' and 'Teacher' roles throughout the application.
+**Goal:** Enforce different permissions for 'Admin' and 'Teacher' roles.
 
 #### **Technical Implementation:**
 
-1.  **Backend Authorization Middleware:**
-    *   Create an Express middleware function (e.g., `requireRole('Admin')`).
-    *   This middleware will run on protected routes. It will decode the JWT from the request, check if the user's `role` payload matches the required role, and reject with a `403 Forbidden` error if it does not.
-    *   Apply this middleware to all sensitive API endpoints (e.g., `DELETE` routes, user management routes, settings updates should be Admin-only).
-
-2.  **Frontend Conditional UI:**
-    *   The `currentUser` object in the `AppContext` will contain the user's role.
-    *   Refactor UI components to conditionally render elements based on this role.
-    *   **Example:** The "Settings" link in the `Sidebar` and the "Delete" button on the `ArchivePage` should only be rendered if `currentUser.role === 'Admin'`. This provides a clean UX but does not replace the need for backend enforcement.
+1.  **Backend Authorization:** Use Django REST Framework's built-in permission classes (e.g., `IsAdminUser`) to protect sensitive API endpoints.
+2.  **Frontend Conditional UI:** In React, conditionally render UI elements based on the `currentUser.role` stored in the `AppContext`.
 
 ---
 
-### **Milestone 4: Advanced AI-Powered Features**
+### **Milestone 4 & 5: Advanced AI Features & Deployment**
 
-**Goal:** Leverage the secure backend and aggregated student data to provide new generative AI insights.
-
-#### **Technical Implementation:**
-
-1.  **AI-Generated Follow-up Recommendations:**
-    *   **Frontend:** Add a "Get AI Recommendations" button to the `StudentProfilePage`.
-    *   **Backend:** Create a new endpoint: `POST /api/ai/followup-recommendations/:studentId`.
-        *   This endpoint will be protected and require authentication.
-        *   It will fetch the specified student's complete history from the database (grades, recent follow-ups, at-risk status).
-        *   It will construct a detailed prompt for the Gemini API, instructing it to act as a school counselor and suggest 3-5 key talking points or questions for the next follow-up meeting.
-        *   The AI's response will be streamed back to the frontend.
-    *   **Frontend:** Display the AI's recommendations in a modal.
-
-2.  **AI-Generated Student Profile Summaries:**
-    *   **Frontend:** Add a "Generate Summary" button to the `StudentProfilePage` header.
-    *   **Backend:** Create a new endpoint: `GET /api/ai/student-summary/:studentId`.
-        *   This endpoint will gather the student's profile, calculate their average grade, and count key follow-up indicators.
-        *   It will prompt the Gemini API to write a concise, one-paragraph summary of the student's current academic and personal status, suitable for a report.
-        *   The summary will be returned as a string.
-    *   **Frontend:** Display the summary in a new "AI Summary" card on the profile, perhaps with a "copy to clipboard" button.
-
----
-
-### **Milestone 5: Deployment & Production Readiness**
-
-**Goal:** Deploy the full-stack application to the internet securely and reliably.
+**Goal:** Build new AI features and deploy the full-stack application.
 
 #### **Technical Implementation:**
 
-1.  **Hosting:**
-    *   **Frontend (React App):** Deploy to a static hosting provider like **Vercel** or **Netlify**.
-    *   **Backend (Node.js App & PostgreSQL DB):** Deploy to a platform-as-a-service (PaaS) like **Render** or **Heroku**.
-
-2.  **Environment Variables:**
-    *   Configure all secrets (Database Connection URL, JWT Secret, Gemini API Key) in the secure environment variable settings of the hosting providers. **`.env` files must not be committed to Git or uploaded.**
-
-3.  **CORS (Cross-Origin Resource Sharing):**
-    *   Configure the Express `cors` middleware on the backend to only accept requests from your deployed frontend's domain. This prevents other websites from making requests to your API.
-
-4.  **HTTPS:**
-    *   Ensure both frontend and backend are served over HTTPS. All recommended hosting providers offer free, automatic SSL certificates.
+1.  **Advanced AI Features:** Create new Django API endpoints that fetch data, construct detailed prompts, and call the Gemini API from the backend to generate follow-up recommendations and student summaries.
+2.  **Deployment:** Deploy the frontend (React) to a service like Vercel and the backend (Django) to a service like Render or Heroku. Configure CORS and environment variables in the production environment.
