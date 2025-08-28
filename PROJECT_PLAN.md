@@ -2,8 +2,8 @@
 # Project & Learning Plan: Building a Secure, Full-Stack App from Zero
 
 This document is your roadmap. It's designed for two purposes:
-1.  **Building the Project:** It provides clear prompts you can give to an AI to generate the code for each step.
-2.  **Your Learning:** It provides a parallel, step-by-step learning path for you to understand the concepts behind the AI-generated code.
+1.  **Building the Project with AI:** It provides clear prompts you can give to an AI to generate the code for each step.
+2.  **Your Learning Plan:** It provides a parallel, step-by-step learning path for you to understand the concepts behind the AI-generated code.
 
 **The Goal:** Transform this AI-built prototype into a secure, professional, multi-user application, and learn the fundamentals of web development along the way.
 
@@ -29,7 +29,7 @@ Your goal here is to understand the "what" and "why" behind the backend code.
 *   **Step 1: Understand the Client-Server Model (The Big Picture)**
     *   **Concept:** Your browser is the "Client." It makes requests (like asking for data). A "Server" is a computer somewhere else that listens for those requests, does some work (like getting data from a database), and sends back a response.
     *   **Analogy:** It's like ordering at a restaurant. You (the Client) make a request to the waiter. The waiter goes to the kitchen (the Server), which prepares your food and sends it back with the waiter. Your current app has the kitchen inside the dining room, which isn't secure or efficient!
-    *   **Action:** Watch a short video on "Client-Server Architecture."
+    *   **Action:** Watch a short video on "Client-Server Architecture." (Search on YouTube).
 
 *   **Step 2: What is Node.js and Express?**
     *   **Concept:** Node.js lets you run JavaScript code outside of a browser (on a server). Express is a popular "framework" (a set of tools and rules) that makes building servers with Node.js much easier and more organized.
@@ -62,7 +62,7 @@ Your goal here is to understand the "what" and "why" behind the backend code.
 *   **Step 1: Asynchronous JavaScript (Fetching Data)**
     *   **Concept:** When you request data from a server, it takes time. "Asynchronous" means your code doesn't wait; it kicks off the request and continues running. `useEffect` in React is the perfect place to start these data requests when a component first loads.
     *   **Tools:** `axios` is a library that makes these data requests (called HTTP requests) simple. `async/await` is modern JavaScript syntax that makes asynchronous code easier to read.
-    *   **Action:** Look at the `useEffect` hook in `AppContext.tsx`. Identify the `axios.get` call and the `async/await` keywords. Watch a beginner's guide to `async/await` in JavaScript.
+    *   **Action:** Look at the `useEffect` hook in `AppContext.tsx`. Identify the `axios.get` call and the `async/await` keywords. Watch a beginner's guide to `async/await` in JavaScript on a platform like freeCodeCamp.
 
 *   **Step 2: What is a JWT (JSON Web Token)?**
     *   **Concept:** A JWT is a secure, digitally signed "ID card" that the server gives to the client after they log in. The client then shows this ID card with every future request to prove who they are.

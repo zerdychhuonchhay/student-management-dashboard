@@ -16,8 +16,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({ data, onConfirm, onEdit, onCl
         <div className="space-y-2 mb-6">
             {(Object.keys(data) as Array<keyof Student>).map((key) => {
                 const value = data[key];
-                // FIX: Removed 'followUpToEdit' and 'followUpIndex' as they are not keys of Student type.
-                const keysToIgnore: Array<keyof Student> = ['Age', 'siblings'];
+                const keysToIgnore: Array<keyof Student> = ['Age', 'siblings', 'eligibility'];
                 if(keysToIgnore.includes(key)) return null;
 
                 if (key === 'financials' && Array.isArray(value)) {

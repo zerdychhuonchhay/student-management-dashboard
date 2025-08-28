@@ -150,8 +150,7 @@ const StudentFormModal: React.FC<StudentFormModalProps> = ({ student, onReview, 
     };
 
     const formFields = (Object.keys(formData) as Array<keyof Student>).filter(k => {
-        // FIX: Removed 'followUpToEdit' and 'followUpIndex' as they are not keys of Student type.
-        const fieldsToExclude: Array<keyof Student> = ['StudentID', 'Age', 'DateLeft', 'ReasonLeft', 'financials', 'School', 'guardians', 'educationHistory', 'photoUrl', 'siblings', 'academicStatus'];
+        const fieldsToExclude: Array<keyof Student> = ['StudentID', 'Age', 'DateLeft', 'ReasonLeft', 'financials', 'School', 'guardians', 'educationHistory', 'photoUrl', 'siblings', 'academicStatus', 'eligibility'];
         if (formData.Grade !== 'University') {
             fieldsToExclude.push('Major');
         }
