@@ -104,6 +104,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const [aiChatHistory, setAiChatHistory] = useState<ChatMessage[]>([]);
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [eligibilityPrompt, setEligibilityPrompt] = useStickyState<string>(DEFAULT_ELIGIBILITY_PROMPT, 'eligibilityPrompt');
+    // FIX: Add state for AI summary feature
+    const [aiSummary, setAiSummary] = useState<string>('');
+    const [isAiSummaryLoading, setIsAiSummaryLoading] = useState(false);
 
     
     // ===================================================================================
@@ -857,6 +860,88 @@ ${JSON.stringify(studentsWithAge, null, 2)}
         }
     };
 
+    // FIX: Implement AI summary generation function
+    const handleGenerateAiSummary = async (student: Student) => {
+        if (!ai) {
+            setAiSummary("AI client is not configured. Please check API key.");
+            setModal('ai-summary');
+            return;
+        }
+
+        setIsAiSummaryLoading(true);
+        setAiSummary(''); // Clear previous summary
+        setModal('ai-summary');
+
+        try {
+            // Gather student data
+            const studentGrades = grades.filter(g => g.StudentID === student.StudentID);
+            const averageGrade = studentGrades.length > 0
+                ? (studentGrades.reduce((sum, g) => sum + g.Score, 0) / studentGrades.length).toFixed(2)
+                : 'N/A';
+
+            const monthlyCosts = (student.financials || []).reduce((total, item) => {
+                return total + calculateMonthlyEquivalent(String(item.amount), item.frequency);
+            }, 0).toFixed(2);
+
+            const studentFollowUps = followUps[student.StudentID] || [];
+            const latestFollowUp = studentFollowUps.length > 0
+                ? studentFollowUps.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+                : null;
+            
+            const followUpHighlights = latestFollowUp ? {
+                date: latestFollowUp.date,
+                homeLife: latestFollowUp.homeLife?.rating,
+                physicalHealth: latestFollowUp.physicalHealth?.rating,
+                riskFactors: latestFollowUp.riskFactors,
+                notes: latestFollowUp.notes,
+                recommendations: latestFollowUp.recommendations,
+            } : 'No follow-up data available.';
+
+            const studentDataForSummary = {
+                profile: {
+                    givenName: student['Given Name'],
+                    familyName: student['Family Name'],
+                    age: student.Age,
+                    grade: student.Grade,
+                    school: student.School.name,
+                    major: student.Major,
+                    academicStatus: student.academicStatus,
+                },
+                academicPerformance: {
+                    averageGrade: averageGrade,
+                },
+                financialSituation: {
+                    totalMonthlyCosts: monthlyCosts,
+                    guardianIncome: student.guardians?.[0]?.income,
+                    guardianJob: student.guardians?.[0]?.job,
+                },
+                wellbeing: {
+                    latestFollowUp: followUpHighlights,
+                }
+            };
+            
+            const prompt = `You are a case manager for a non-profit. Write a concise, one-paragraph summary of the following student's profile for a report. Be objective and focus on the key data points provided.
+            
+Student Data:
+${JSON.stringify(studentDataForSummary, null, 2)}`;
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+            });
+
+            setAiSummary(response.text);
+
+        } catch (error) {
+            console.error("AI Summary Generation Error:", error);
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            setAiSummary(`Sorry, I encountered an error while generating the summary: ${errorMessage}`);
+        } finally {
+            setIsAiSummaryLoading(false);
+        }
+    };
+
+
     const handleConfirmSibling = (studentId1: string, studentId2: string) => {
         const student1 = [...students, ...archivedStudents].find(s => s.StudentID === studentId1);
         const student2 = [...students, ...archivedStudents].find(s => s.StudentID === studentId2);
@@ -972,8 +1057,9 @@ ${JSON.stringify(studentsWithAge, null, 2)}
     const contextValue: AppContextType = {
         currentUser, handleLogin, handleLogout,
         students, archivedStudents, pendingStudents, grades, curriculum, followUps, parentProfiles, events, eventToEdit, columnConfig, archiveColumnConfig, activeTab, previousTab, selectedStudent, modal, reviewData, studentToDelete, studentToReject, postSelectionAction, followUpToEdit, pendingNewStudents, pendingUpdatedStudents, pendingPotentialDuplicates, pendingSiblingConfirmation, importErrors, fileHeaders, importFileData, guardianToEdit, filters, category, sort, archiveSort, studentsWithAge, schoolAverages, filteredAndSortedStudents, sortedArchivedStudents, studentGrades, atRiskStudents, totals, aiChatHistory, isAiLoading, studentHistory, 
+        aiSummary, isAiSummaryLoading,
         eligibilityPrompt, setEligibilityPrompt, handleResetEligibilityPrompt,
-        setStudents, setArchivedStudents, setPendingStudents, setGrades, setCurriculum, setFollowUps, setParentProfiles, setEvents, setEventToEdit, setColumnConfig, setArchiveColumnConfig, setActiveTab, setPreviousTab, setSelectedStudent, setModal, setReviewData, setStudentToDelete, setStudentToReject, setPostSelectionAction, setFollowUpToEdit, setPendingNewStudents, setPendingUpdatedStudents, setPendingPotentialDuplicates, setPendingSiblingConfirmation, setImportErrors, setFileHeaders, setImportFileData, setGuardianToEdit, setFilters, setCategory, setSort, setArchiveSort, setStudentHistory, handleSort, handleArchiveSort, handleSelectSchool, handleSelectStudent, handleReviewStudent, handleSaveStudent, handleApproveStudent, handleRejectStudent, handleImportStudents, handleProcessMappedImport, handleConfirmImport, handleUpdateStudentPhoto, handleUpdateParentPhoto, handleArchiveStudent, handleUpdateArchivedStudent, handleRestoreStudent, handlePermanentDelete, handleResetData, openModal, handleAddGrades, handleAddFollowUp, handleUpdateFollowUp, handleDeleteFollowUp, handleOpenEditFollowUpModal, handleAddEvent, handleUpdateEvent, handleDeleteEvent, handleAddMenuSelect, handleStudentSelectionForAction, handleAiQuery, handleBack, handleConfirmSibling, handleResolveSiblingGuardians, handleManageAttachments, handleUpdateGuardianInfo, handleRefreshData
+        setStudents, setArchivedStudents, setPendingStudents, setGrades, setCurriculum, setFollowUps, setParentProfiles, setEvents, setEventToEdit, setColumnConfig, setArchiveColumnConfig, setActiveTab, setPreviousTab, setSelectedStudent, setModal, setReviewData, setStudentToDelete, setStudentToReject, setPostSelectionAction, setFollowUpToEdit, setPendingNewStudents, setPendingUpdatedStudents, setPendingPotentialDuplicates, setPendingSiblingConfirmation, setImportErrors, setFileHeaders, setImportFileData, setGuardianToEdit, setFilters, setCategory, setSort, setArchiveSort, setStudentHistory, handleSort, handleArchiveSort, handleSelectSchool, handleSelectStudent, handleReviewStudent, handleSaveStudent, handleApproveStudent, handleRejectStudent, handleImportStudents, handleProcessMappedImport, handleConfirmImport, handleUpdateStudentPhoto, handleUpdateParentPhoto, handleArchiveStudent, handleUpdateArchivedStudent, handleRestoreStudent, handlePermanentDelete, handleResetData, openModal, handleAddGrades, handleAddFollowUp, handleUpdateFollowUp, handleDeleteFollowUp, handleOpenEditFollowUpModal, handleAddEvent, handleUpdateEvent, handleDeleteEvent, handleAddMenuSelect, handleStudentSelectionForAction, handleAiQuery, handleGenerateAiSummary, handleBack, handleConfirmSibling, handleResolveSiblingGuardians, handleManageAttachments, handleUpdateGuardianInfo, handleRefreshData
     };
 
     return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;

@@ -1,7 +1,7 @@
 
 
 import React, { useMemo, useRef } from 'react';
-import { User, Calendar, MapPin, School, GraduationCap, Briefcase, DollarSign, Edit, Eye, ArrowLeft, PlusCircle, Trash2, Phone, Camera, Check, BookOpen, Download } from 'lucide-react';
+import { User, Calendar, MapPin, School, GraduationCap, Briefcase, DollarSign, Edit, Eye, ArrowLeft, PlusCircle, Trash2, Phone, Camera, Check, BookOpen, Download, Sparkles } from 'lucide-react';
 import type { Student, AcademicStatus } from '../types';
 import DetailItem from '../components/ui/DetailItem';
 import { useAppContext } from '../context/AppContext';
@@ -47,6 +47,9 @@ const StudentProfilePage: React.FC = () => {
         handleManageAttachments,
         handleBack,
         setActiveTab,
+        // FIX: Get AI summary state and handler from context
+        handleGenerateAiSummary,
+        isAiSummaryLoading,
     } = useAppContext();
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -163,6 +166,16 @@ const StudentProfilePage: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex gap-2 mt-8">
+                        {/* FIX: Add "Generate AI Summary" button */}
+                        <button
+                            onClick={() => handleGenerateAiSummary(student)}
+                            disabled={isAiSummaryLoading}
+                            className="bg-purple-100 text-purple-700 px-4 py-2 rounded-md hover:bg-purple-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait"
+                            title="Generate a concise summary of this student's profile using AI"
+                        >
+                            <Sparkles size={16}/>
+                            {isAiSummaryLoading ? 'Generating...' : 'Generate AI Summary'}
+                        </button>
                         <button onClick={() => openModal('edit', student)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 flex items-center gap-2"><Edit size={16}/> Edit</button>
                         <button onClick={() => { setActiveTab('grades'); }} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center gap-2"><Eye size={16}/> View Grades</button>
                     </div>

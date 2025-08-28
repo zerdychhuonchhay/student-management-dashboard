@@ -252,6 +252,9 @@ export interface AppContextType {
     totals: { count: number; costs: number };
     aiChatHistory: ChatMessage[];
     isAiLoading: boolean;
+    // FIX: Add state properties for AI summary feature
+    isAiSummaryLoading: boolean;
+    aiSummary: string;
     studentHistory: Student[];
     eligibilityPrompt: string;
     setEligibilityPrompt: React.Dispatch<React.SetStateAction<string>>;
@@ -321,6 +324,8 @@ export interface AppContextType {
     handleAddMenuSelect: (type: string) => void;
     handleStudentSelectionForAction: (student: Student) => void;
     handleAiQuery: (query: string) => Promise<void>;
+    // FIX: Add handler for AI summary feature
+    handleGenerateAiSummary: (student: Student) => Promise<void>;
     handleBack: () => void;
     handleConfirmSibling: (studentId1: string, studentId2: string) => void;
     handleResolveSiblingGuardians: (studentIdToCopyFrom: string | null) => void;
