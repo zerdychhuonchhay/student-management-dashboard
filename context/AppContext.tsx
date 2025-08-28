@@ -8,9 +8,10 @@ import { initialCurriculum } from '../data/curriculum';
 import { initialFollowUps } from '../data/followUps';
 import { initialParentProfiles } from '../data/parentProfiles';
 import { initialEvents } from '../data/events';
+import { initialUsers } from '../data/users';
 import { ALL_COLUMNS, ALL_ARCHIVED_COLUMNS, generateDefaultColumnConfig } from '../constants';
 import { calculateMonthlyEquivalent, getCategoryForStudent, mapExcelRowToStudent, calculateStringSimilarity, areGuardiansEffectivelyTheSame, normalizeSearchableName } from '../utils/helpers';
-import type { Student, Grade, FollowUp, FollowUps, Curriculum, Sort, Filters, ParentProfiles, UpdatedStudentInfo, PotentialDuplicateInfo, DuplicateResolution, AppContextType, ChatMessage, ResolvedUpdates, Attachment, ColumnConfig, Event, ColumnMapping, GuardianToEdit, Guardian, AtRiskStudent, FollowUpToEdit } from '../types';
+import type { User, Student, Grade, FollowUp, FollowUps, Curriculum, Sort, Filters, ParentProfiles, UpdatedStudentInfo, PotentialDuplicateInfo, DuplicateResolution, AppContextType, ChatMessage, ResolvedUpdates, Attachment, ColumnConfig, Event, ColumnMapping, GuardianToEdit, Guardian, AtRiskStudent, FollowUpToEdit } from '../types';
 
 const SIMILARITY_THRESHOLD = 0.8;
 
@@ -29,6 +30,12 @@ export const useAppContext = () => {
 
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    // ===================================================================================
+    // --- AUTH STATE ---
+    // ===================================================================================
+    const [currentUser, setCurrentUser] = useStickyState<User | null>(null, 'currentUser');
+    const [users, setUsers] = useState<User[]>(initialUsers);
+
     // ===================================================================================
     // --- CORE STATE ---
     // ===================================================================================
@@ -303,6 +310,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // ===================================================================================
     // --- HANDLER FUNCTIONS ---
     // ===================================================================================
+
+    const handleLogin = (email: string, password: string): boolean => {
+        const user = users.find(u => u.email === email && u.password === password);
+        if (user) {
+            const { password, ...userToStore } = user;
+            setCurrentUser(userToStore);
+            return true;
+        }
+        return false;
+    };
+
+    const handleLogout = () => {
+        setCurrentUser(null);
+    };
     
     const _updateStudentLists = (...updatedStudents: Student[]) => {
         const updatesMap = new Map(updatedStudents.map(s => [s.StudentID, s]));
@@ -929,6 +950,7 @@ ${JSON.stringify(studentsWithAge, null, 2)}
     };
 
     const contextValue: AppContextType = {
+        currentUser, handleLogin, handleLogout,
         students, archivedStudents, pendingStudents, grades, curriculum, followUps, parentProfiles, events, eventToEdit, columnConfig, archiveColumnConfig, activeTab, previousTab, selectedStudent, modal, reviewData, studentToDelete, studentToReject, postSelectionAction, followUpToEdit, pendingNewStudents, pendingUpdatedStudents, pendingPotentialDuplicates, pendingSiblingConfirmation, importErrors, fileHeaders, importFileData, guardianToEdit, filters, category, sort, archiveSort, studentsWithAge, schoolAverages, filteredAndSortedStudents, sortedArchivedStudents, studentGrades, atRiskStudents, totals, aiChatHistory, isAiLoading, studentHistory, setStudents, setArchivedStudents, setPendingStudents, setGrades, setCurriculum, setFollowUps, setParentProfiles, setEvents, setEventToEdit, setColumnConfig, setArchiveColumnConfig, setActiveTab, setPreviousTab, setSelectedStudent, setModal, setReviewData, setStudentToDelete, setStudentToReject, setPostSelectionAction, setFollowUpToEdit, setPendingNewStudents, setPendingUpdatedStudents, setPendingPotentialDuplicates, setPendingSiblingConfirmation, setImportErrors, setFileHeaders, setImportFileData, setGuardianToEdit, setFilters, setCategory, setSort, setArchiveSort, setStudentHistory, handleSort, handleArchiveSort, handleSelectSchool, handleSelectStudent, handleReviewStudent, handleSaveStudent, handleApproveStudent, handleRejectStudent, handleImportStudents, handleProcessMappedImport, handleConfirmImport, handleUpdateStudentPhoto, handleUpdateParentPhoto, handleArchiveStudent, handleUpdateArchivedStudent, handleRestoreStudent, handlePermanentDelete, handleResetData, openModal, handleAddGrades, handleAddFollowUp, handleUpdateFollowUp, handleDeleteFollowUp, handleOpenEditFollowUpModal, handleAddEvent, handleUpdateEvent, handleDeleteEvent, handleAddMenuSelect, handleStudentSelectionForAction, handleAiQuery, handleBack, handleConfirmSibling, handleResolveSiblingGuardians, handleManageAttachments, handleUpdateGuardianInfo, handleRefreshData
     };
 

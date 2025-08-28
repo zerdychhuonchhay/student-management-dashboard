@@ -202,7 +202,15 @@ export interface FollowUpToEdit {
     index: number;
 }
 
+export interface User {
+    id: string;
+    email: string;
+    password?: string;
+    role: 'Admin' | 'Teacher';
+}
+
 export interface AppContextType {
+    currentUser: User | null;
     students: Student[];
     archivedStudents: Student[];
     pendingStudents: Student[];
@@ -245,6 +253,8 @@ export interface AppContextType {
     aiChatHistory: ChatMessage[];
     isAiLoading: boolean;
     studentHistory: Student[];
+    handleLogin: (email: string, password: string) => boolean;
+    handleLogout: () => void;
     setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
     setArchivedStudents: React.Dispatch<React.SetStateAction<Student[]>>;
     setPendingStudents: React.Dispatch<React.SetStateAction<Student[]>>;
