@@ -10,9 +10,6 @@ const Section: React.FC<{ title: string, children: React.ReactNode }> = ({ title
 );
 
 const ManualInstructionsPage: React.FC = () => {
-    // By wrapping the content in a dedicated scroll container for the screen view,
-    // the inner 'print-area' div remains clean of layout-constraining styles,
-    // making it much easier for the print stylesheet to format it correctly.
     return (
         <div className="h-full overflow-y-auto print-area-container">
             <div className="p-4 sm:p-6 lg:p-8 print-area">
@@ -33,94 +30,82 @@ const ManualInstructionsPage: React.FC = () => {
                 <Section title="Dashboard Overview">
                     <p>The Dashboard is the first page you see. It provides a high-level summary of your student data.</p>
                     <ul>
-                        <li><strong>Student Overview:</strong> See the total number of students and a breakdown between K-12 and University levels.</li>
-                        <li><strong>Financial Overview:</strong> View the total monthly cost equivalent for all students and a pie chart showing the distribution of costs by category.</li>
-                        <li><strong>Calendar:</strong> A simple calendar widget for quick date reference.</li>
-                        <li><strong>Recently Added Students:</strong> A list of the 5 most recently enrolled students for quick access to their profiles.</li>
+                        <li><strong>Student & Financial Overviews:</strong> See the total number of students and a breakdown of their monthly financial costs.</li>
+                        <li><strong>Students Requiring Attention:</strong> This important widget automatically flags students who may need extra support based on low grades or negative follow-up reports.</li>
+                        <li><strong>Calendar & Agenda:</strong> View upcoming events, student birthdays, and enrollment anniversaries at a glance.</li>
                     </ul>
                 </Section>
-
-                <Section title="Student List Page">
-                    <p>Accessed by clicking "Student List" in the sidebar, this is the main page for viewing and managing all active students.</p>
-                    <ul>
-                        <li><strong>Sorting:</strong> Click on any column header (e.g., "First Name", "Age") to sort the table by that column. Click again to reverse the sort order.</li>
-                        <li><strong>Category Filters:</strong> Use the buttons at the top (e.g., "University", "High School") to quickly filter students by their educational level.</li>
-                        <li><strong>Filtering & Searching:</strong> Click the "Filter" button to open a modal with advanced options. You can search by name, or filter by grade, school, sex, age, and record completion status.</li>
-                        <li><strong>Importing from Excel:</strong> Click the "Import from Excel" button to upload a <code>.xlsx</code> or <code>.xls</code> file. The application will guide you through reviewing new students, potential duplicates, and updates to existing students before finalizing the import.</li>
-                        <li><strong>Adding Grades Quickly:</strong> Click the <code className="text-sm font-bold">+</code> icon in the "Actions" column for any student to quickly open the "Add Grades" modal for them.</li>
-                    </ul>
-                </Section>
-
+                
                 <Section title="Managing Students">
                     <p>All core student management actions are easily accessible.</p>
-                    <h4>Adding a New Student</h4>
+                    <h4>Adding a New Student (New Workflow)</h4>
                     <ol>
                         <li>Click the "Add New" button in the top right corner and select "Add Student".</li>
-                        <li>Fill out the form with the student's information. You can add multiple financial records, guardians, and education history entries.</li>
-                        <li>Click "Review & Save".</li>
-                        <li>Verify the information in the review modal and click "Confirm & Save".</li>
+                        <li>Fill out the form with the applicant's information.</li>
+                        <li>After clicking "Review & Save" and confirming, the student is sent to the <strong>Pending List</strong> for a final review.</li>
+                        <li>An AI-powered eligibility check is automatically run on the new applicant.</li>
+                        <li>Navigate to the "Pending List" page (from the sidebar) to approve or reject the application.</li>
                     </ol>
                     <h4>Editing a Student</h4>
                      <ol>
-                        <li>Navigate to the student's profile page by clicking their name in the Student List.</li>
+                        <li>Navigate to an active student's profile page by clicking their name in the Student List.</li>
                         <li>Click the "Edit" button in the profile header.</li>
                         <li>Make your desired changes in the form and proceed with the "Review & Save" process.</li>
                     </ol>
                     <h4>Archiving and Deleting Students</h4>
                      <ol>
-                        <li>From a student's profile, click "Edit", then click the "Archive Student" button at the bottom of the form.</li>
+                        <li>From an active student's profile, click "Edit", then click the "Archive Student" button at the bottom of the form.</li>
                         <li>Provide a reason for archiving and confirm. The student will be moved to the "Archive" section.</li>
                         <li>To permanently delete a student, go to the "Archive" page, find the student, and click "Delete". You must confirm this action as it cannot be undone.</li>
-                        <li>You can also restore an archived student from the "Archive" page by clicking "Restore".</li>
-                    </ol>
+                     </ol>
                 </Section>
 
-                 <Section title="Student Profile Details">
-                    <p>The student profile page provides a comprehensive 360-degree view of the student.</p>
+                <Section title="Pending List & AI Eligibility Check">
+                    <p>Accessed from the sidebar, this page is your admissions hub for new applicants. The number in the yellow badge indicates how many applications are awaiting review.</p>
                     <ul>
-                        <li><strong>Information Panels:</strong> View detailed personal, academic, financial, and guardian information in organized cards.</li>
-                        <li><strong>Managing Photos:</strong> Hover over the student's profile picture to change or remove it. You can do the same for parent/guardian photos on the "Parents & Guardians" page.</li>
-                        <li><strong>Sibling Management:</strong> The system automatically suggests possible siblings based on the same family name. You can review these suggestions and click "(Confirm)" to link the student profiles. Confirmed siblings are listed separately.</li>
-                        <li><strong>Follow-Up History:</strong> This panel on the right shows a chronological list of all follow-ups. You can add a new follow-up, edit existing ones, or delete them directly from this view.</li>
+                        <li><strong>Automatic AI Evaluation:</strong> When a new student is added to the pending list, their profile (guardian income, job, etc.) is automatically sent to the AI. The AI acts as an admissions officer and provides:
+                            <ul>
+                                <li>An <strong>Eligibility Status</strong> (e.g., "Eligible", "Ineligible").</li>
+                                <li>A <strong>Reason</strong> summarizing its decision based on the criteria you set.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Review & Approve/Reject:</strong> On the Pending List page, you can see each applicant's details alongside the AI's recommendation. This AI assessment is a powerful tool to help you make informed decisions quickly.
+                            <ul>
+                                <li>Click <strong>"Approve"</strong> to move the student to the main "Student List" and make them an active student.</li>
+                                <li>Click <strong>"Reject"</strong> to permanently remove the application.</li>
+                            </ul>
+                        </li>
                     </ul>
                 </Section>
 
-                 <Section title="Grades Center">
-                    <p>Access the Grades Center by clicking "View Grades" on a student's profile page.</p>
+                <Section title="Student List Page">
+                    <p>This is the main page for viewing and managing all **active** students.</p>
                     <ul>
-                        <li><strong>Performance Trend:</strong> A line chart visualizing the student's average score over time.</li>
-                        <li><strong>Subject Comparison:</strong> A bar chart comparing the student's average score in each subject against the school average for that same subject and grade.</li>
-                        <li><strong>All Grade Records:</strong> A detailed table listing every grade entry for the student, including the calculated Cambodian letter grade.</li>
-                        <li><strong>Add Grades:</strong> Use the "Add Grades" button to enter new scores for a specific month or semester. The available subjects are pulled from the Curriculum settings.</li>
+                        <li><strong>Sorting & Filtering:</strong> Use the column headers to sort, and use the search bar and "Advanced Filters" button to find specific students.</li>
+                        <li><strong>Customizable View:</strong> Hover over a column header to see a "pin" icon to lock it to the left side. Go to <strong>Settings</strong> to reorder columns or hide them from view.</li>
+                        <li><strong>Importing from Excel:</strong> Click the "Import from Excel" button to upload a spreadsheet. The application will guide you through mapping your columns and reviewing potential duplicates before finalizing the import.</li>
                     </ul>
                 </Section>
 
-                <Section title="School & Parent Centers">
-                    <h4>School Center</h4>
-                    <p>This page provides an overview of all schools in the system, separated into Universities and K-12 schools. Each school has a card showing its total student count, average academic performance, and a list of enrolled students with their individual averages.</p>
-                    <h4>Parents & Guardians List</h4>
-                    <p>Find a list of all unique parents and guardians. Each card displays the guardian's contact information and a list of their associated children in the program. You can click on a child's name to go directly to their profile.</p>
-                </Section>
-
-                 <Section title="Data Management">
-                    <h4>Curriculum Management</h4>
-                    <p>On this page, you can define the subjects for every school, campus, grade, and (for universities) major/year/semester. The subjects you list here will automatically appear in the "Add Grades" modal for students matching that criteria. Simply edit the comma-separated list of subjects in the text boxes to make changes.</p>
-                     <h4>Settings</h4>
+                 <Section title="Data Management & Settings">
                      <p>Click the gear icon in the sidebar to open the Settings modal.</p>
                      <ul>
-                         <li><strong>Column Visibility:</strong> Check or uncheck column names to show or hide them on the main Student List page.</li>
-                         <li><strong>Reset All Data:</strong> This is a powerful feature that will erase all your changes (new students, grades, edits) and restore the application to its original sample data. Use with caution.</li>
+                         <li><strong>Column Management:</strong> Drag and drop to reorder columns, check/uncheck to show/hide them, and use the pin icon to lock columns in place on the Student List page.</li>
+                         <li><strong>AI Eligibility Criteria:</strong> This powerful feature lets you change the instructions the AI uses for its eligibility check. Edit the text to change the AI's focus (e.g., prioritize different risk factors, adjust income thresholds). Click "Reset to Default" to restore the original instructions.</li>
+                         <li><strong>Curriculum Management:</strong> On this page, you can define the subjects for every school and grade. The subjects you list here will automatically appear in the "Add Grades" modal for relevant students.</li>
+                         <li><strong>Reset All Data:</strong> This will erase all your changes and restore the application to its original sample data. Use with caution.</li>
                      </ul>
                 </Section>
 
                 <Section title="AI Assistant">
-                    <p>Click the "AI Assistant" button in the top bar to open the chat modal. You can ask natural language questions about your student data, for example:</p>
+                    <p>Click the "AI Assistant" button in the top bar to open the chat modal. You can ask natural language questions about your **active** student data. The AI can analyze the entire student list to find information for you.</p>
+                    <p>Good examples of questions include:</p>
                     <ul>
                         <li><em>"How many students are in Grade 9 at SPS?"</em></li>
                         <li><em>"What is Kunthea Yim's major?"</em></li>
                         <li><em>"List all students whose monthly costs are over $200."</em></li>
+                        <li><em>"Who are the guardians of the students with the family name Run?"</em></li>
                     </ul>
-                    <p>The AI will analyze the current student data to provide an answer.</p>
                 </Section>
 
             </div>

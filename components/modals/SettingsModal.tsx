@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import type { ColumnConfig } from '../../types';
 import Modal from './Modal';
 import { GripVertical, Pin, PinOff } from 'lucide-react';
+import { useAppContext } from '../../context/AppContext';
 
 interface SettingsModalProps {
     columnConfig: ColumnConfig[];
@@ -13,6 +13,7 @@ interface SettingsModalProps {
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ columnConfig, setColumnConfig, onReset, onClose }) => {
     const [draggedItemKey, setDraggedItemKey] = useState<string | null>(null);
+    const { eligibilityPrompt, setEligibilityPrompt, handleResetEligibilityPrompt } = useAppContext();
 
     const handleToggleVisibility = (key: string) => {
         setColumnConfig(prev => prev.map(c => c.key === key ? { ...c, visible: !c.visible } : c));
@@ -77,6 +78,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ columnConfig, setColumnCo
                     ))}
                 </ul>
             </div>
+            
+            <div className="mt-6 border-t pt-4">
+                <h3 className="text-lg font-semibold mb-2">AI Eligibility Criteria</h3>
+                <p className="text-sm text-gray-600 mb-2">
+                    Edit the instructions given to the AI when it evaluates a new student's eligibility for the scholarship program.
+                </p>
+                <textarea
+                    value={eligibilityPrompt}
+                    onChange={(e) => setEligibilityPrompt(e.target.value)}
+                    className="w-full p-2 border rounded-md bg-white font-mono text-sm"
+                    rows={6}
+                />
+                <button 
+                    onClick={handleResetEligibilityPrompt}
+                    className="text-sm text-gray-600 hover:underline mt-2"
+                >
+                    Reset to Default
+                </button>
+            </div>
+
             <div className="mt-6 border-t pt-4">
                 <h3 className="text-lg font-semibold mb-2">Data Management</h3>
                 <button onClick={onReset} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">Reset All Data</button>

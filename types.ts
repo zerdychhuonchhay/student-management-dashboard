@@ -253,6 +253,9 @@ export interface AppContextType {
     aiChatHistory: ChatMessage[];
     isAiLoading: boolean;
     studentHistory: Student[];
+    eligibilityPrompt: string;
+    setEligibilityPrompt: React.Dispatch<React.SetStateAction<string>>;
+    handleResetEligibilityPrompt: () => void;
     handleLogin: (email: string, password: string) => boolean;
     handleLogout: () => void;
     setStudents: React.Dispatch<React.SetStateAction<Student[]>>;

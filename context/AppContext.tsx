@@ -15,6 +15,8 @@ import type { User, Student, Grade, FollowUp, FollowUps, Curriculum, Sort, Filte
 
 const SIMILARITY_THRESHOLD = 0.8;
 
+const DEFAULT_ELIGIBILITY_PROMPT = "You are an admissions officer for a non-profit organization that provides educational scholarships. Your task is to evaluate a student's application based on their financial and family situation to determine if they are eligible for aid. Focus on signs of financial hardship like low guardian income (e.g., under $300/month), unstable jobs (e.g., vendor, cleaner, construction), or high educational costs relative to income. Provide your assessment in JSON format.";
+
 const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
@@ -84,9 +86,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const [sort, setSort] = useState<Sort>({ column: 'Given Name', direction: 'asc' });
     const [archiveSort, setArchiveSort] = useState<Sort>({ column: 'Given Name', direction: 'asc' });
     
-    // AI Chat state
+    // AI state
     const [aiChatHistory, setAiChatHistory] = useState<ChatMessage[]>([]);
     const [isAiLoading, setIsAiLoading] = useState(false);
+    const [eligibilityPrompt, setEligibilityPrompt] = useStickyState<string>(DEFAULT_ELIGIBILITY_PROMPT, 'eligibilityPrompt');
+
     
     // ===================================================================================
     // --- MEMOIZED DERIVED DATA ---
@@ -409,14 +413,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 totalMonthlyCosts: (student.financials || []).reduce((total, item) => total + calculateMonthlyEquivalent(String(item.amount), item.frequency), 0),
                 comments: student.Comments,
             };
-
-            const systemInstruction = "You are an admissions officer for a non-profit organization that provides educational scholarships. Your task is to evaluate a student's application based on their financial and family situation to determine if they are eligible for aid. Focus on signs of financial hardship like low guardian income, unstable jobs, or high educational costs relative to income. Provide your assessment in JSON format.";
             
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: `Please evaluate the following student profile for scholarship eligibility: ${JSON.stringify(studentProfile)}`,
                 config: {
-                    systemInstruction,
+                    systemInstruction: eligibilityPrompt,
                     responseMimeType: "application/json",
                     responseSchema: {
                         type: Type.OBJECT,
@@ -676,6 +678,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setArchivedStudents(prev => prev.filter(s => s.StudentID !== studentToDelete.StudentID));
         setModal(null);
         setStudentToDelete(null);
+    };
+
+    const handleResetEligibilityPrompt = () => {
+        setEligibilityPrompt(DEFAULT_ELIGIBILITY_PROMPT);
     };
 
     const handleResetData = () => {
@@ -951,7 +957,9 @@ ${JSON.stringify(studentsWithAge, null, 2)}
 
     const contextValue: AppContextType = {
         currentUser, handleLogin, handleLogout,
-        students, archivedStudents, pendingStudents, grades, curriculum, followUps, parentProfiles, events, eventToEdit, columnConfig, archiveColumnConfig, activeTab, previousTab, selectedStudent, modal, reviewData, studentToDelete, studentToReject, postSelectionAction, followUpToEdit, pendingNewStudents, pendingUpdatedStudents, pendingPotentialDuplicates, pendingSiblingConfirmation, importErrors, fileHeaders, importFileData, guardianToEdit, filters, category, sort, archiveSort, studentsWithAge, schoolAverages, filteredAndSortedStudents, sortedArchivedStudents, studentGrades, atRiskStudents, totals, aiChatHistory, isAiLoading, studentHistory, setStudents, setArchivedStudents, setPendingStudents, setGrades, setCurriculum, setFollowUps, setParentProfiles, setEvents, setEventToEdit, setColumnConfig, setArchiveColumnConfig, setActiveTab, setPreviousTab, setSelectedStudent, setModal, setReviewData, setStudentToDelete, setStudentToReject, setPostSelectionAction, setFollowUpToEdit, setPendingNewStudents, setPendingUpdatedStudents, setPendingPotentialDuplicates, setPendingSiblingConfirmation, setImportErrors, setFileHeaders, setImportFileData, setGuardianToEdit, setFilters, setCategory, setSort, setArchiveSort, setStudentHistory, handleSort, handleArchiveSort, handleSelectSchool, handleSelectStudent, handleReviewStudent, handleSaveStudent, handleApproveStudent, handleRejectStudent, handleImportStudents, handleProcessMappedImport, handleConfirmImport, handleUpdateStudentPhoto, handleUpdateParentPhoto, handleArchiveStudent, handleUpdateArchivedStudent, handleRestoreStudent, handlePermanentDelete, handleResetData, openModal, handleAddGrades, handleAddFollowUp, handleUpdateFollowUp, handleDeleteFollowUp, handleOpenEditFollowUpModal, handleAddEvent, handleUpdateEvent, handleDeleteEvent, handleAddMenuSelect, handleStudentSelectionForAction, handleAiQuery, handleBack, handleConfirmSibling, handleResolveSiblingGuardians, handleManageAttachments, handleUpdateGuardianInfo, handleRefreshData
+        students, archivedStudents, pendingStudents, grades, curriculum, followUps, parentProfiles, events, eventToEdit, columnConfig, archiveColumnConfig, activeTab, previousTab, selectedStudent, modal, reviewData, studentToDelete, studentToReject, postSelectionAction, followUpToEdit, pendingNewStudents, pendingUpdatedStudents, pendingPotentialDuplicates, pendingSiblingConfirmation, importErrors, fileHeaders, importFileData, guardianToEdit, filters, category, sort, archiveSort, studentsWithAge, schoolAverages, filteredAndSortedStudents, sortedArchivedStudents, studentGrades, atRiskStudents, totals, aiChatHistory, isAiLoading, studentHistory, 
+        eligibilityPrompt, setEligibilityPrompt, handleResetEligibilityPrompt,
+        setStudents, setArchivedStudents, setPendingStudents, setGrades, setCurriculum, setFollowUps, setParentProfiles, setEvents, setEventToEdit, setColumnConfig, setArchiveColumnConfig, setActiveTab, setPreviousTab, setSelectedStudent, setModal, setReviewData, setStudentToDelete, setStudentToReject, setPostSelectionAction, setFollowUpToEdit, setPendingNewStudents, setPendingUpdatedStudents, setPendingPotentialDuplicates, setPendingSiblingConfirmation, setImportErrors, setFileHeaders, setImportFileData, setGuardianToEdit, setFilters, setCategory, setSort, setArchiveSort, setStudentHistory, handleSort, handleArchiveSort, handleSelectSchool, handleSelectStudent, handleReviewStudent, handleSaveStudent, handleApproveStudent, handleRejectStudent, handleImportStudents, handleProcessMappedImport, handleConfirmImport, handleUpdateStudentPhoto, handleUpdateParentPhoto, handleArchiveStudent, handleUpdateArchivedStudent, handleRestoreStudent, handlePermanentDelete, handleResetData, openModal, handleAddGrades, handleAddFollowUp, handleUpdateFollowUp, handleDeleteFollowUp, handleOpenEditFollowUpModal, handleAddEvent, handleUpdateEvent, handleDeleteEvent, handleAddMenuSelect, handleStudentSelectionForAction, handleAiQuery, handleBack, handleConfirmSibling, handleResolveSiblingGuardians, handleManageAttachments, handleUpdateGuardianInfo, handleRefreshData
     };
 
     return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
