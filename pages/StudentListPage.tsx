@@ -74,7 +74,7 @@ const StudentTable: React.FC = () => {
 
     return (
         <table className="min-w-full divide-y divide-gray-200 border-separate border-spacing-0">
-            <thead className="bg-gray-50 sticky top-0 z-10">
+            <thead className="bg-gray-50 sticky top-0 z-20">
                 <tr>
                     {visibleColumns.map((col, index) => {
                         const isLocked = col.locked;
@@ -84,7 +84,7 @@ const StudentTable: React.FC = () => {
                         if (isLocked) {
                             style.position = 'sticky';
                             style.left = lockedColumnOffsets[lockedIndex] || 0;
-                            style.zIndex = 20;
+                            style.zIndex = 30;
                         }
                         
                         return (
@@ -96,7 +96,7 @@ const StudentTable: React.FC = () => {
                                 onDragOver={handleDragOver}
                                 onDrop={(e) => handleDrop(e, col.key)}
                                 onClick={() => col.key !== 'Actions' && handleSort(col.key)}
-                                className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b group ${draggedItemKey === col.key ? 'opacity-50' : ''} ${isLocked ? 'border-r bg-gray-50' : ''}`}
+                                className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b group ${draggedItemKey === col.key ? 'opacity-50' : ''} ${isLocked ? 'bg-gray-50 shadow-[inset_-1px_0_0_0_#e5e7eb]' : ''}`}
                                 style={style}
                             >
                                 <div className="flex items-center justify-between gap-2">
@@ -132,7 +132,7 @@ const StudentTable: React.FC = () => {
                             return (
                             <td
                                 key={col.key}
-                                className={`px-4 py-4 whitespace-nowrap text-sm text-gray-600 ${isLocked ? 'border-r' : ''} ${isLocked ? 'bg-white group-hover:bg-gray-50' : 'group-hover:bg-gray-50'}`}
+                                className={`px-4 py-4 whitespace-nowrap text-sm text-gray-600 ${isLocked ? 'shadow-[inset_-1px_0_0_0_#e5e7eb]' : ''} ${isLocked ? 'bg-white group-hover:bg-gray-50' : 'group-hover:bg-gray-50'}`}
                                 style={style}
                             >
                                 {col.key === 'Given Name' ? (

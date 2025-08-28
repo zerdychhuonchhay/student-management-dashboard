@@ -1,6 +1,7 @@
 
+
 import React, { createContext, useState, useMemo, useContext } from 'react';
-import * as XLSX from 'https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs';
+import * as XLSX from 'https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs';
 // FIX: Use package import for GoogleGenAI as per guidelines
 import { GoogleGenAI } from '@google/genai';
 import { useStickyState } from '../hooks/useStickyState';
@@ -140,8 +141,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 const studentCategory = getCategoryForStudent(student);
                 if (category !== 'all' && category !== studentCategory) return false;
 
-                const searchLower = filters.search.toLowerCase();
-                if (filters.search && !`${student['Given Name']} ${student['Family Name']}`.toLowerCase().includes(searchLower)) return false;
+                if (filters.search) {
+                    const searchLower = filters.search.toLowerCase();
+                    const searchTerms = searchLower.split(/\s+/).filter(Boolean); // Split by space and remove empty strings
+        
+                    const searchableString = [
+                        student.StudentID,
+                        student['Given Name'],
+                        student['Family Name'],
+                        student.School.name
+                    ].join(' ').toLowerCase();
+                    
+                    // The 'every' method ensures all search terms are found in the string
+                    if (!searchTerms.every(term => searchableString.includes(term))) {
+                        return false;
+                    }
+                }
+
                 if (filters.grade && student.Grade !== filters.grade) return false;
                 if (filters.school && student.School.name !== filters.school) return false;
                 if (filters.sex && student.Sex !== filters.sex) return false;
