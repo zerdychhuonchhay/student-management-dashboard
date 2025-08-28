@@ -1,41 +1,49 @@
-
 # Project Plan: Full-Stack Student Management System
 
 This document outlines the technical roadmap for evolving the application from a frontend-only prototype into a secure, multi-user, full-stack application with advanced AI capabilities.
 
 ---
 
-### **Milestone 1: Build the Backend Foundation (The Secure Vault)**
+### **Milestone 1: Build the Backend Foundation (The Secure Vault) - COMPLETE**
 
 **Goal:** Create a private, authoritative server to manage all data, logic, and secrets. All data will be migrated from frontend files to a secure database.
 
 #### **Technical Implementation:**
 
-1.  **Project Setup:**
-    *   Initialize a new Node.js project in a `backend` directory.
-    *   Install dependencies: `express`, `pg` (for PostgreSQL), `prisma` (ORM), `bcryptjs` (hashing), `jsonwebtoken` (authentication), `cors`, `dotenv`, `express-validator`.
+*   **Project Setup:** A Node.js project has been created in the `backend` directory with all necessary dependencies.
+*   **Database:** A Prisma schema (`prisma/schema.prisma`) now defines the entire database structure for PostgreSQL.
+*   **Authentication API:** Secure endpoints for user registration (with `bcrypt` password hashing) and login (with JWT generation) are complete.
+*   **Core Data API:** RESTful endpoints for managing students (`GET`, `POST`, `PUT`, `DELETE`) have been created.
+*   **Validation:** Basic data validation has been implemented on the API routes.
 
-2.  **Database:**
-    *   **Technology:** PostgreSQL.
-    *   **Schema:** Use Prisma to define a relational schema with tables for `User`, `Student`, `Guardian`, `Grade`, `FollowUp`, `FinancialRecord`, etc. Define relations (e.g., a `Student` has many `Grades`).
-    *   **Action:** Run `prisma migrate dev` to generate and apply the SQL migrations to your database.
+#### **How to Run Your New Backend:**
 
-3.  **Authentication API:**
-    *   **Security:** Implement password hashing using `bcrypt`. **Plain text passwords must not be stored.**
-    *   **Endpoints:**
-        *   `POST /api/auth/register`: Hashes the password before creating a new `User`.
-        *   `POST /api/auth/login`: Compares the provided password against the stored hash. On success, generates and returns a JSON Web Token (JWT).
-        *   `POST /api/auth/logout`: Invalidates the user's session (can be implemented with a token blocklist if needed).
-
-4.  **Core Data API:**
-    *   Create RESTful endpoints for all data models (e.g., `students`, `grades`).
-    *   **Endpoints Example (Students):**
-        *   `GET /api/students`: Fetch all students.
-        *   `GET /api/students/:id`: Fetch a single student with their related data (grades, guardians).
-        *   `POST /api/students`: Create a new student.
-        *   `PUT /api/students/:id`: Update a student.
-        *   `DELETE /api/students/:id`: Archive a student.
-    *   **Validation:** Use `express-validator` middleware on all `POST` and `PUT` routes to validate and sanitize incoming data before it reaches the database logic.
+1.  **Navigate to the Backend:** Open a new terminal and change directory into the new `backend` folder:
+    ```bash
+    cd backend
+    ```
+2.  **Install Dependencies:** Run `npm install` to download all the required libraries.
+    ```bash
+    npm install
+    ```
+3.  **Set Up Environment Variables:**
+    *   Create a new file in the `backend` folder named `.env`.
+    *   Copy the contents of `.env.example` into your new `.env` file.
+    *   **Crucially, you must replace the `DATABASE_URL` with your actual PostgreSQL connection string.** You can get a free database from services like Supabase or Render.
+    *   The `JWT_SECRET` is a random string you should create for security.
+4.  **Set Up the Database:** Run the Prisma migrate command. This will read your `schema.prisma` file and create all the necessary tables in your database.
+    ```bash
+    npx prisma migrate dev --name init
+    ```
+5.  **Seed the Database:** (Optional but recommended) Run the seed script to create the initial 'Admin' and 'Teacher' users so you can log in.
+    ```bash
+    npx prisma db seed
+    ```
+6.  **Start the Server:** Run the development server.
+    ```bash
+    npm run dev
+    ```
+    Your backend API will now be running, typically on `http://localhost:3001`.
 
 ---
 
