@@ -286,10 +286,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 const latestFollowUp = studentFollowUps.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
                 
                 if (latestFollowUp.homeLife?.rating === 'Poor') reasons.add('Poor Home Life');
+                if (latestFollowUp.physicalHealth?.rating === 'Poor') reasons.add('Poor Physical Health');
+                if (latestFollowUp.socialInteraction?.rating === 'Poor') reasons.add('Poor Social Interaction');
                 if (latestFollowUp.drugsAlcoholViolence?.rating === 'Yes') reasons.add('Substance/Violence');
                 if (latestFollowUp.childProtectionConcerns === 'Yes') reasons.add('Protection Concern');
                 if (latestFollowUp.humanTraffickingRisk === 'Yes') reasons.add('Trafficking Risk');
-                if (latestFollowUp.riskFactors?.length > 2) reasons.add(`${latestFollowUp.riskFactors.length} Risk Factors`);
+                if (latestFollowUp.riskFactors?.length > 2) reasons.add(`${latestFollowUp.riskFactors.length}+ Risk Factors`);
             }
             
             if (reasons.size > 0) {
