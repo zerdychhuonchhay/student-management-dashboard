@@ -1,4 +1,4 @@
-import React, { createContext, useState, useMemo, useContext } from 'react';
+import React, { createContext, useState, useMemo, useContext, useEffect } from 'react';
 import * as XLSX from 'https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs';
 import { GoogleGenAI, Type } from '@google/genai';
 import { useStickyState } from '../hooks/useStickyState';
@@ -36,19 +36,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // --- AUTH STATE ---
     // ===================================================================================
     const [currentUser, setCurrentUser] = useStickyState<User | null>(null, 'currentUser');
-    const [users, setUsers] = useState<User[]>(initialUsers);
+    const [users, setUsers] = useState<User[]>([]);
 
     // ===================================================================================
     // --- CORE STATE ---
     // ===================================================================================
-    const [students, setStudents] = useStickyState<Student[]>(initialStudents, 'studentDashboardData');
+    const [students, setStudents] = useStickyState<Student[]>([], 'studentDashboardData');
     const [pendingStudents, setPendingStudents] = useStickyState<Student[]>([], 'pendingStudentsData');
     const [archivedStudents, setArchivedStudents] = useStickyState<Student[]>([], 'archivedStudentData');
-    const [grades, setGrades] = useStickyState<Grade[]>(initialGrades, 'studentGradesData');
-    const [curriculum, setCurriculum] = useStickyState<Curriculum>(initialCurriculum, 'studentCurriculumData');
-    const [followUps, setFollowUps] = useStickyState<FollowUps>(initialFollowUps, 'studentFollowUpsData');
-    const [parentProfiles, setParentProfiles] = useStickyState<ParentProfiles>(initialParentProfiles, 'parentProfilesData');
-    const [events, setEvents] = useStickyState<Event[]>(initialEvents, 'calendarEventsData');
+    const [grades, setGrades] = useStickyState<Grade[]>([], 'studentGradesData');
+    const [curriculum, setCurriculum] = useStickyState<Curriculum>({}, 'studentCurriculumData');
+    const [followUps, setFollowUps] = useStickyState<FollowUps>({}, 'studentFollowUpsData');
+    const [parentProfiles, setParentProfiles] = useStickyState<ParentProfiles>({}, 'parentProfilesData');
+    const [events, setEvents] = useStickyState<Event[]>([], 'calendarEventsData');
+
+    // Simulate initial data loading from an API
+    useEffect(() => {
+        // In a real app, this would be an API call, e.g., axios.get('/api/data')
+        // For now, we load from the initial data files.
+        setStudents(initialStudents);
+        setGrades(initialGrades);
+        setCurriculum(initialCurriculum);
+        setFollowUps(initialFollowUps);
+        setParentProfiles(initialParentProfiles);
+        setEvents(initialEvents);
+        setUsers(initialUsers);
+    }, []);
 
     // ===================================================================================
     // --- UI & FILTERING STATE ---
