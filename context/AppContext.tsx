@@ -53,7 +53,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Simulate initial data loading from an API
     useEffect(() => {
         // In a real app, this would be an API call, e.g., axios.get('/api/data')
-        // For now, we load from the initial data files.
+        // For now, we load from the initial data files. This prepares the app
+        // for the async nature of real data fetching in Milestone 2.
         setStudents(initialStudents);
         setGrades(initialGrades);
         setCurriculum(initialCurriculum);
